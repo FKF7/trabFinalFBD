@@ -1,0 +1,180 @@
+-- Drop tables if they exist
+DROP TABLE IF EXISTS INSTITUTO;
+DROP TABLE IF EXISTS DEPARTAMENTO;
+DROP TABLE IF EXISTS PROFESSOR;
+DROP TABLE IF EXISTS FUNCIONARIO_ADM;
+DROP TABLE IF EXISTS PREDIO;
+DROP TABLE IF EXISTS SALA;
+DROP TABLE IF EXISTS HORARIO;
+DROP TABLE IF EXISTS CURSO;
+DROP TABLE IF EXISTS DISCIPLINA;
+DROP TABLE IF EXISTS ALUNO;
+DROP TABLE IF EXISTS TURMA;
+DROP TABLE IF EXISTS MATRICULA;
+DROP TABLE IF EXISTS CURSO_INSTITUTO;
+DROP TABLE IF EXISTS DISCIPLINA_CURSO;
+DROP TABLE IF EXISTS REQUISITO;
+
+CREATE TABLE INSTITUTO (
+    COD_INST SERIAL PRIMARY KEY,
+    NOME VARCHAR(120) NOT NULL,
+    SIGLA VARCHAR(10) NOT NULL
+);
+
+CREATE TABLE DEPARTAMENTO (
+    COD_DEPTO SERIAL PRIMARY KEY,
+    NOME VARCHAR(120) NOT NULL,
+    SIGLA VARCHAR(10) NOT NULL,
+    COD_INST INT NOT NULL,
+    FOREIGN KEY (COD_INST) REFERENCES INSTITUTO(COD_INST)
+);
+
+CREATE TABLE PROFESSOR (
+    CPF VARCHAR(14) PRIMARY KEY,
+    RG BIGINT UNIQUE NOT NULL,
+    NOME VARCHAR(50) NOT NULL,
+    DATA_NASC DATE NOT NULL,
+    RUA VARCHAR(50) NOT NULL,
+    NUMERO INT NOT NULL,
+    COMPLEMENTO VARCHAR(50),
+    BAIRRO VARCHAR(40) NOT NULL,
+    CEP INT NOT NULL,
+    CIDADE VARCHAR(50) NOT NULL,
+    ESTADO VARCHAR(2) NOT NULL,
+    PAIS VARCHAR(30) NOT NULL,
+    TELEFONE VARCHAR(14) NOT NULL,
+    EMAIL VARCHAR(120) NOT NULL,
+    MATRICULA VARCHAR(6) UNIQUE NOT NULL,
+    ESPECIALIZACAO VARCHAR(200) NOT NULL,
+    COD_DEPTO INT NOT NULL,
+    FOREIGN KEY (COD_DEPTO) REFERENCES DEPARTAMENTO(COD_DEPTO)
+);
+
+CREATE TABLE FUNCIONARIO_ADM (
+                                 CPF VARCHAR(14) PRIMARY KEY,
+                                 RG BIGINT UNIQUE NOT NULL,
+                                 NOME VARCHAR(50) NOT NULL,
+                                 DATA_NASC DATE NOT NULL,
+                                 RUA VARCHAR(50) NOT NULL,
+                                 NUMERO INT NOT NULL,
+                                 COMPLEMENTO VARCHAR(50),
+                                 BAIRRO VARCHAR(40) NOT NULL,
+                                 CEP INT NOT NULL,
+                                 CIDADE VARCHAR(50) NOT NULL,
+                                 ESTADO VARCHAR(2) NOT NULL,
+                                 PAIS VARCHAR(30) NOT NULL,
+                                 TELEFONE VARCHAR(14) NOT NULL,
+                                 EMAIL VARCHAR(120) NOT NULL,
+                                 CARGO VARCHAR(30) NOT NULL,
+                                 COD_INST INT,
+                                 COD_DEPTO INT,
+                                 FOREIGN KEY (COD_INST) REFERENCES INSTITUTO(COD_INST),
+                                 FOREIGN KEY (COD_DEPTO) REFERENCES DEPARTAMENTO(COD_DEPTO)
+);
+
+CREATE TABLE PREDIO (
+                        NUM_PREDIO SERIAL PRIMARY KEY,
+                        CAMPUS VARCHAR(30) NOT NULL,
+                        NUM_ANDARES SMALLINT NOT NULL,
+                        NUM_SALAS SMALLINT NOT NULL
+);
+
+CREATE TABLE SALA (
+                      COD_SALA SERIAL PRIMARY KEY,
+                      NUM_SALA INT NOT NULL,
+                      CAPACIDADE INT NOT NULL,
+                      NUM_PREDIO INT NOT NULL,
+                      FOREIGN KEY (NUM_PREDIO) REFERENCES PREDIO(NUM_PREDIO),
+                      CONSTRAINT UNIQUE_SALA UNIQUE(NUM_SALA, NUM_PREDIO)
+);
+
+CREATE TABLE HORARIO (
+                         COD_HORARIO SERIAL PRIMARY KEY,
+                         HORA TIME NOT NULL,
+                         DIAS_SEMANA VARCHAR(50)
+);
+
+CREATE TABLE CURSO (
+                       SIGLA VARCHAR(10) PRIMARY KEY,
+                       NOME VARCHAR(50) UNIQUE NOT NULL,
+                       NUM_ETAPAS SMALLINT NOT NULL,
+                       NUM_CREDITOS SMALLINT NOT NULL
+);
+
+CREATE TABLE DISCIPLINA (
+                            COD_DISC VARCHAR(8) PRIMARY KEY,
+                            NOME VARCHAR(50) UNIQUE NOT NULL,
+                            NUM_CREDITOS SMALLINT NOT NULL,
+                            COD_DEPTO INT NOT NULL,
+                            FOREIGN KEY (COD_DEPTO) REFERENCES DEPARTAMENTO(COD_DEPTO)
+);
+
+CREATE TABLE ALUNO (
+                       CPF VARCHAR(14) PRIMARY KEY,
+                       RG BIGINT UNIQUE NOT NULL,
+                       NOME VARCHAR(50) NOT NULL,
+                       DATA_NASC DATE NOT NULL,
+                       RUA VARCHAR(50) NOT NULL,
+                       NUMERO INT NOT NULL,
+                       COMPLEMENTO VARCHAR(50),
+                       BAIRRO VARCHAR(40) NOT NULL,
+                       CEP INT NOT NULL,
+                       CIDADE VARCHAR(50) NOT NULL,
+                       ESTADO VARCHAR(2) NOT NULL,
+                       PAIS VARCHAR(30) NOT NULL,
+                       TELEFONE VARCHAR(14) NOT NULL,
+                       EMAIL VARCHAR(120) NOT NULL,
+                       MATRICULA VARCHAR(6) UNIQUE NOT NULL,
+                       ETAPA SMALLINT NOT NULL,
+                       SEMESTRE_INGRESSO VARCHAR(6) NOT NULL,
+                       CREDITOS_OBTIDOS INT DEFAULT 0 NOT NULL,
+                       ATIVO SMALLINT DEFAULT 1 NOT NULL,
+                       SIGLA_CURSO VARCHAR(10) NOT NULL,
+                       FOREIGN KEY (SIGLA_CURSO) REFERENCES CURSO(SIGLA)
+);
+
+CREATE TABLE TURMA (
+                       COD_TURMA SERIAL PRIMARY KEY,
+                       NOME_TURMA VARCHAR(3) NOT NULL,
+                       PERIODO_LETIVO VARCHAR(6) NOT NULL,
+                       NUM_ALUNOS SMALLINT DEFAULT 0 NOT NULL,
+                       VAGAS SMALLINT NOT NULL,
+                       COD_SALA INT,
+                       COD_DISC VARCHAR(8) NOT NULL,
+                       COD_HORARIO INT NOT NULL,
+                       MATRICULA_PROFESSOR VARCHAR(6) NOT NULL,
+                       CONSTRAINT UNIQUE_TURMA_DISCIPLINA UNIQUE(NOME_TURMA, PERIODO_LETIVO, COD_DISC),
+                       CONSTRAINT UNIQUE_HORA_PROFESSOR UNIQUE(MATRICULA_PROFESSOR, COD_HORARIO, PERIODO_LETIVO),
+                       CONSTRAINT UNIQUE_HORA_SALA UNIQUE(COD_SALA, COD_HORARIO, PERIODO_LETIVO),
+                       FOREIGN KEY (COD_SALA) REFERENCES SALA(COD_SALA),
+                       FOREIGN KEY (COD_HORARIO) REFERENCES HORARIO(COD_HORARIO),
+                       FOREIGN KEY (COD_DISC) REFERENCES DISCIPLINA(COD_DISC),
+                       FOREIGN KEY (MATRICULA_PROFESSOR) REFERENCES PROFESSOR(MATRICULA)
+);
+
+CREATE TABLE MATRICULA (
+                           MATRICULA_ALUNO VARCHAR(6) NOT NULL,
+                           COD_TURMA INT NOT NULL,
+                           CONCEITO VARCHAR(2),
+                           PRIMARY KEY(MATRICULA_ALUNO, COD_TURMA),
+                           FOREIGN KEY (MATRICULA_ALUNO) REFERENCES ALUNO(MATRICULA),
+                           FOREIGN KEY (COD_TURMA) REFERENCES TURMA
+);
+
+CREATE TABLE CURSO_INSTITUTO (
+                                 SIGLA_CURSO VARCHAR(10) NOT NULL,
+                                 COD_INST INT NOT NULL,
+                                 PRIMARY KEY(SIGLA_CURSO, COD_INST),
+                                 FOREIGN KEY(SIGLA_CURSO) REFERENCES CURSO(SIGLA),
+                                 FOREIGN KEY(COD_INST) REFERENCES INSTITUTO(COD_INST)
+);
+
+CREATE TABLE DISCIPLINA_CURSO (
+                                  COD_DISC_CURSO SERIAL PRIMARY KEY,
+                                  SIGLA_CURSO VARCHAR(10) NOT NULL,
+                                  COD_DISC VARCHAR(8) NOT NULL,
+                                  ETAPA SMALLINT NOT NULL,
+                                  FOREIGN KEY(SIGLA_CURSO) REFERENCES CURSO(SIGLA),
+                                  FOREIGN KEY(COD_DISC) REFERENCES DISCIPLINA(COD_DISC)
+);
+
